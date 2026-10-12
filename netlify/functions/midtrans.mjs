@@ -1,5 +1,5 @@
 import {createHash} from 'node:crypto';
-import {reply,store,validId,statusMidtrans,paidStatus,terminalStatus,matchesAmount,discord,equal} from '../../_shared.mjs';
+import {reply,store,validId,statusMidtrans,paidStatus,terminalStatus,matchesAmount,discord,equal} from './_shared.mjs';
 
 export default async request => {
   if (request.method !== 'POST') return reply(405, {error:'Method tidak diizinkan'});
