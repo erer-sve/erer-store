@@ -1,4 +1,4 @@
-import {reply,readBody,makeAdminSession,adminSetCookie,equal,throttle,limit} from '../_shared.mjs';
+import {reply,makeAdminSession,adminSetCookie,equal,throttle,limit} from '../_shared.mjs';
 export default async request=>{
  if(request.method!=='POST')return reply(405,{error:'Method tidak diizinkan'});
  try{
