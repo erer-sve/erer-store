@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ERER STORE — Admin</title>
+<style>
+:root{color-scheme:dark;font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#06101f;color:#eaf3ff}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(ellipse at 15% 0%,#173d7a 0,transparent 40%),radial-gradient(ellipse at 95% 15%,#075875 0,transparent 35%),linear-gradient(145deg,#06101f,#0b1930 60%,#071326)}
+header{padding:20px 5%;border-bottom:1px solid #7fc7ff30;background:#061327bb;backdrop-filter:blur(18px)}.brand{font-weight:950;letter-spacing:1.4px;font-size:22px;text-shadow:0 0 20px #58baff80}.sub{color:#9fbce0;font-size:13px;margin-top:5px}
+main{max-width:1050px;margin:28px auto;padding:0 16px}.card{background:linear-gradient(145deg,#132744f2,#0c1d35f5);border:1px solid #8fcaff30;border-radius:18px;padding:20px;box-shadow:inset 0 1px #ffffff12,0 12px 30px #0003;margin-bottom:16px}
+h1{font-size:25px;margin:0 0 8px}h2{font-size:18px;margin:0 0 14px}.muted{color:#9fb4d1;font-size:13px;line-height:1.6}
+input,select{width:100%;padding:13px;border-radius:10px;border:1px solid #345477;background:#08172a;color:#fff;font:inherit;margin:7px 0 12px}
+button{cursor:pointer;border:1px solid #70c8ff44;border-radius:10px;padding:11px 14px;background:#15365b;color:#eaf6ff;font-weight:750}button.primary{background:linear-gradient(110deg,#1765ef,#0ea5d8);border:0;width:100%;padding:14px}button.danger{background:#4b1e32;border-color:#ff8caa55}.hidden{display:none!important}.row{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:16px 0}.stat{padding:14px;border-radius:12px;background:#08172a;border:1px solid #345477}.stat b{font-size:22px;display:block;margin-top:6px}.orders{display:grid;gap:12px}.order{border:1px solid #345477;background:#091a2e;border-radius:13px;padding:15px}.pill{display:inline-block;padding:5px 9px;border-radius:99px;font-size:11px;font-weight:850;background:#4b3715;color:#ffd783}.pill.paid{background:#123f34;color:#83f0c3}.pill.rejected{background:#4b1e32;color:#ffb4c7}.meta{font-size:13px;color:#b5c9e4;line-height:1.8;margin:10px 0}.actions{display:flex;gap:8px;flex-wrap:wrap}.actions button{flex:1;min-width:120px}.msg{font-size:13px;margin-top:10px;color:#8ce8ff}
+@media(max-width:520px){.stats{grid-template-columns:1fr}.card{padding:16px}h1{font-size:22px}}
+</style>
+</head>
+<body>
+<header><div class="brand">ERER STORE <span style="color:#59c8ff">/ ADMIN</span></div><div class="sub">Panel terpisah untuk verifikasi pembayaran dan status pesanan</div></header>
+<main>
+<section class="card" id="login">
+<h1>Login Admin</h1><p class="muted">Masuk untuk melihat pesanan pelanggan. Jangan bagikan akses admin ke pembeli.</p>
+<form id="loginForm"><label for="password">Password admin</label><input id="password" type="password" autocomplete="current-password" required placeholder="Masukkan password admin"><button class="primary" type="submit">Masuk ke Dashboard</button></form><p id="loginMsg" class="msg"></p>
+</section>
+<section id="dashboard" class="hidden">
+<div class="card"><div class="row"><div><h1>Dashboard Pesanan</h1><p class="muted">Tandai lunas hanya setelah dana benar-benar masuk ke akun DANA.</p></div><button id="logout">Keluar</button></div>
+<div class="stats"><div class="stat"><span class="muted">Menunggu verifikasi</span><b id="pendingCount">—</b></div><div class="stat"><span class="muted">Lunas</span><b id="paidCount">—</b></div><div class="stat"><span class="muted">Total pesanan</span><b id="allCount">—</b></div></div>
+<div class="row"><select id="filter" aria-label="Filter status" style="max-width:240px;margin:0"><option value="all">Semua pesanan</option><option value="pending">Menunggu verifikasi</option><option value="paid">Lunas</option><option value="rejected">Ditolak</option></select><button id="refresh">Muat ulang</button></div></div>
+<div class="card"><h2>Daftar Pesanan</h2><div id="orders" class="orders"><p class="muted">Memuat pesanan...</p></div><p id="dashMsg" class="msg"></p></div>
+</section>
+</main>
+<script>
+const $=id=>document.getElementById(id);let orders=[];
+async function call(path,body={}){const r=await fetch('/api/admin/'+path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),credentials:'include'});const j=await r.json().catch(()=>({error:'Respons server tidak valid'}));if(!r.ok)throw Error(j.error||'Permintaan gagal');return j}
+$('loginForm').addEventListener('submit',async e=>{e.preventDefault();$('loginMsg').textContent='Memeriksa akses...';try{await call('login',{password:$('password').value});$('login').classList.add('hidden');$('dashboard').classList.remove('hidden');$('password').value='';await load()}catch(err){$('loginMsg').textContent=err.message}});
+$('logout').onclick=async()=>{try{await call('logout')}catch{}$('dashboard').classList.add('hidden');$('login').classList.remove('hidden');$('loginMsg').textContent='Kamu sudah keluar.'};
+$('refresh').onclick=load;$('filter').onchange=render;
+async function load(){ $('dashMsg').textContent='Memuat...';try{const j=await call('orders');orders=j.orders||[];render();$('dashMsg').textContent='Data diperbarui.'}catch(e){$('dashMsg').textContent=e.message}}
+function render(){const pending=orders.filter(o=>o.status==='pending').length;$('pendingCount').textContent=pending;$('paidCount').textContent=orders.filter(o=>o.status==='paid').length;$('allCount').textContent=orders.length;const f=$('filter').value;const list=orders.filter(o=>f==='all'||o.status===f);$('orders').innerHTML=list.length?list.map(o=>{const status=o.status||'pending';const label=status==='paid'?'LUNAS':status==='rejected'?'DITOLAK':'MENUNGGU VERIFIKASI';return '<article class="order"><div class="row"><strong>'+esc(o.id||'Tanpa ID')+'</strong><span class="pill '+esc(status)+'">'+label+'</span></div><div class="meta">Pelanggan: '+esc(o.username||'—')+'<br>WhatsApp: '+esc(o.phone||'—')+'<br>Produk: '+esc(o.product||'—')+' ('+esc(o.game||'—')+')<br>Jumlah: '+esc(String(o.quantity||1))+'<br>Total: <b>'+money(Number(o.total||0))+'</b><br>Dibuat: '+esc(o.createdAt||o.created_at||'—')+'</div>'+(status==='pending'?'<div class="actions"><button onclick="updateStatus(\''+escAttr(o.id)+'\',\'paid\')">✓ Verifikasi Lunas</button><button class="danger" onclick="updateStatus(\''+escAttr(o.id)+'\',\'rejected\')">Tolak / Belum Masuk</button></div>':'')+'</article>'}).join(''):'<p class="muted">Belum ada pesanan pada filter ini.</p>'}
+async function updateStatus(id,status){const promptText=status==='paid'?'Pastikan transaksi benar-benar masuk ke DANA. Konfirmasi lunas?':'Tandai pesanan ini ditolak/belum dibayar?';if(!confirm(promptText))return;try{await call('verify',{id,status});$('dashMsg').textContent='Status pesanan diperbarui.';await load()}catch(e){$('dashMsg').textContent=e.message}}
+function money(n){return 'Rp'+n.toLocaleString('id-ID')}function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}function escAttr(s){return String(s).replace(/\\/g,'').replace(/'/g,'')}
+</script>
+</body></html>
