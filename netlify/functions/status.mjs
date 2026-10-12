@@ -1,4 +1,4 @@
-import {reply,store,validId,statusMidtrans,paidStatus} from '../../_shared.mjs';
+import {reply,store,validId,statusMidtrans,paidStatus} from './_shared.mjs';
 export default async request=>{
  if(request.method!=='GET')return reply(405,{error:'Method tidak diizinkan'});
  const id=new URL(request.url).searchParams.get('id');
