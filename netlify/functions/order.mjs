@@ -8,7 +8,7 @@ export default async request=>{
   const b=await request.json(),game=safe(b.game,80),product=safe(b.product,100),username=safe(b.username,100),phone=safe(b.phone,20),promo=safe(b.promo,30).toUpperCase(),qty=b.quantity;
   const item=catalog[game]?.[product];
   if(!item||item.price<=0)return reply(400,{error:'Produk belum tersedia'});
-  if(!Number.isInteger(qty)||qty<1||qty>20||!username||!/^[+]?\\d{9,16}$/.test(phone.replace(/[\\s-]/g,'')))return reply(400,{error:'Data pesanan tidak valid'});
+  if(!Number.isInteger(qty)||qty<1||qty>20||!username||!/^\+?\d{9,16}$/.test(phone.replace(/[\s-]/g,'')))return reply(400,{error:'Data pesanan tidak valid'});
   const subtotal=item.price*qty,discount=promo==='ERER5'&&subtotal>100000?Math.round(subtotal*.05):0,total=subtotal-discount,id='ER-'+randomUUID();
   const order={id,game,product,username,phone,qty,subtotal,discount,total,status:'pending',paymentMethod:'QRIS_STATIC',createdAt:new Date().toISOString()};
   await store().setJSON('order/'+id,order);
