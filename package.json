@@ -1,0 +1,1 @@
+{"private":true,"scripts":{"build":"echo Static site"},"dependencies":{"@netlify/blobs":"^9.1.0"}}
