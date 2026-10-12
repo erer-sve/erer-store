@@ -1,6 +1,6 @@
 
 import {getStore} from '@netlify/blobs';
-import {createHash,randomUUID,timingSafeEqual} from 'node:crypto';
+import {createHash,randomUUID,timingSafeEqual,createHmac,randomBytes} from 'node:crypto';
 export const catalog={
  'Drag Drive Simulator':{'GP Gaji':{price:55000,stock:20},'Uang 50JT':{price:10000,stock:20}},
  'Blox Fruits':{'Produk custom (konfirmasi admin)':{price:0,stock:0}},
@@ -31,3 +31,11 @@ export async function statusMidtrans(id){
 export const paidStatus=x=>x.status_code==='200'&&(x.transaction_status==='settlement'||(x.transaction_status==='capture'&&(!x.fraud_status||x.fraud_status==='accept')));
 export const terminalStatus=x=>['expire','cancel','deny','failure'].includes(x.transaction_status);
 export function matchesAmount(x,o){return Number.isFinite(Number(x.gross_amount))&&Number(x.gross_amount)===o.total}
+
+export const adminCookieName='erer_admin';
+const sessionSign=value=>createHmac('sha256',process.env.SESSION_SECRET||'missing-session-secret-configure-this').update(value).digest('hex');
+export function makeAdminSession(){const payload=Buffer.from(JSON.stringify({exp:Date.now()+8*60*60*1000,nonce:randomBytes(16).toString('hex')})).toString('base64url');return payload+'.'+sessionSign(payload)}
+export function adminSessionValid(request){const raw=request.headers.get('cookie')||'';const token=raw.split(';').map(x=>x.trim()).find(x=>x.startsWith(adminCookieName+'='))?.slice(adminCookieName.length+1)||'';const i=token.lastIndexOf('.');if(i<1)return false;const payload=token.slice(0,i),sig=token.slice(i+1),expected=sessionSign(payload);if(sig.length!==expected.length||!timingSafeEqual(Buffer.from(sig),Buffer.from(expected)))return false;try{return JSON.parse(Buffer.from(payload,'base64url').toString()).exp>Date.now()}catch{return false}}
+export const adminSetCookie=token=>adminCookieName+'='+token+'; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=28800';
+export const adminClearCookie=adminCookieName+'=; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=0';
+export async function listOrders(){const s=store(),all=await s.list({prefix:'order/'}),rows=await Promise.all((all.blobs||[]).map(async b=>await s.get(b.key,{type:'json'})));return rows.filter(Boolean).sort((a,b)=>String(b.createdAt||'').localeCompare(String(a.createdAt||'')))}
