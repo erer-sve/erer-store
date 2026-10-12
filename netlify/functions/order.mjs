@@ -11,7 +11,7 @@ export default async request=>{
  if(!Number.isInteger(qty)||qty<1||qty>20||!username||!/^[+]?\d{9,16}$/.test(phone.replace(/[\s-]/g,'')))return reply(400,{error:'Data pesanan tidak valid'});
  const subtotal=item.price*qty,discount=promo==='ERER5'&&subtotal>100000?Math.round(subtotal*.05):0,total=subtotal-discount,id='ER-'+randomUUID();
  const order={id,game,product,username,phone,qty,subtotal,discount,total,status:'pending',createdAt:new Date().toISOString()};
- const r=await fetch(snapBase()+'/snap/v1/transactions',{method:'POST',headers:{Authorization:auth(),'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify({transaction_details:{order_id:id,gross_amount:total},item_details:[{id:'item',price:subtotal,quantity:1,name:(game+' - '+product).slice(0,50)},...(discount?[{id:'discount',price:-discount,quantity:1,name:'Promo ERER5'}]:[])],customer_details:{first_name:username,phone},enabled_payments:['qris']})});
+ const r=await fetch(snapBase()+'/snap/v1/transactions',{method:'POST',headers:{Authorization:auth(),'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify({transaction_details:{order_id:id,gross_amount:total},item_details:[{id:'item',price:total,quantity:1,name:(game+' - '+product+(discount?' (Promo ERER5)':'')).slice(0,50)}],customer_details:{first_name:username,phone},enabled_payments:['qris']})});
  const snap=await r.json().catch(()=>({}));
  if(!r.ok||!snap.redirect_url)throw Error('Midtrans menolak transaksi: '+JSON.stringify(snap).slice(0,200));
  await store().setJSON('order/'+id,{...order,redirect_url:snap.redirect_url});
