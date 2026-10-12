@@ -1,4 +1,4 @@
-import {catalog,reply,store,safe,discord,limit,throttle,snapBase,auth} from '../../_shared.mjs';
+import {catalog,reply,store,safe,discord,limit,throttle,snapBase,auth} from './_shared.mjs';
 import {randomUUID} from 'node:crypto';
 export default async request=>{
  if(request.method!=='POST')return reply(405,{error:'Method tidak diizinkan'});
