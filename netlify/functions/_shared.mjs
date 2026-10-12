@@ -20,18 +20,6 @@ export function limit(request){const ip=request.headers.get('x-nf-client-connect
 export async function throttle(key,seconds=45){const s=store(),k='rate/'+key,now=Date.now(),last=Number(await s.get(k)||0);if(now-last<seconds*1000)return false;await s.set(k,String(now));return true}
 export const equal=(a,b)=>{const x=Buffer.from(a||''),y=Buffer.from(b||'');return x.length===y.length&&timingSafeEqual(x,y)};
 
-export const midtransBase=()=>process.env.MIDTRANS_ENV==='production'?'https://api.midtrans.com':'https://api.sandbox.midtrans.com';
-export const snapBase=()=>process.env.MIDTRANS_ENV==='production'?'https://app.midtrans.com':'https://app.sandbox.midtrans.com';
-export const auth=()=> 'Basic '+Buffer.from((process.env.MIDTRANS_SERVER_KEY||'')+':').toString('base64');
-export async function statusMidtrans(id){
- const r=await fetch(midtransBase()+'/v2/'+encodeURIComponent(id)+'/status',{headers:{Authorization:auth(),Accept:'application/json'}});
- if(!r.ok)throw Error('Midtrans status API: '+r.status);
- return r.json();
-}
-export const paidStatus=x=>x.status_code==='200'&&(x.transaction_status==='settlement'||(x.transaction_status==='capture'&&(!x.fraud_status||x.fraud_status==='accept')));
-export const terminalStatus=x=>['expire','cancel','deny','failure'].includes(x.transaction_status);
-export function matchesAmount(x,o){return Number.isFinite(Number(x.gross_amount))&&Number(x.gross_amount)===o.total}
-
 export const adminCookieName='erer_admin';
 const sessionSign=value=>createHmac('sha256',process.env.SESSION_SECRET||'missing-session-secret-configure-this').update(value).digest('hex');
 export function makeAdminSession(){const payload=Buffer.from(JSON.stringify({exp:Date.now()+8*60*60*1000,nonce:randomBytes(16).toString('hex')})).toString('base64url');return payload+'.'+sessionSign(payload)}
