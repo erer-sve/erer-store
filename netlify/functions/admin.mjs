@@ -1,5 +1,5 @@
 
-import {reply,store,inventory,catalog,discord,equal,safe,validId} from '../../_shared.mjs';
+import {reply,store,inventory,catalog,discord,equal,safe,validId} from './_shared.mjs';
 export default async(request)=>{
  if(request.method!=='POST')return reply(405,{error:'Method tidak diizinkan'});
  if(!process.env.ADMIN_API_TOKEN||!equal(request.headers.get('x-admin-token'),process.env.ADMIN_API_TOKEN))return reply(401,{error:'Tidak diizinkan'});
